@@ -47,7 +47,6 @@
 \keywords{Manuscript format, template, SPIE Proceedings, LaTeX}
 
 \section{Introduction}
-\textcolor{red}{Roser, Kyle, Saraswathi, Ramya, please comment}
 
 NASA's Habitable Worlds Observatory aims to directly image and characterize $\approx 25$ habitable exoplanets to better constrain the occurence rate of worlds like our own. Among the characterization efforts includes an interest in the photometric characterization of exoplanets in the ultraviolet. The presence of ozone in a planet's atmosphere, leading to the very broad ozone absorption band, can help to determine at what stage in planetary evolution a planet is in. This scientific effort has ignited an interest in an unltraviolet coronagraph dedicated to exo-Earth characterization. The ultraviolet is a massive technical challenge, with particularly poor photon efficiency due to the high absorption of materials at shorter wavelengths. To solve this, many studies are investigating aluminum-based coatings with enhanced reflectivity in the ultraviolet. However, in this study we aim to leverage an additional degree of freedom to maximize throughput in the ultraviolet - the coronagraph masks themselves.
 
@@ -116,7 +115,10 @@ Figure \ref{fig:azimuthal_study} shows that there is a clear relation between co
 This study is concerned with the amplitude-apodizing APLCs, which operate by modifying the transmission at the entrance pupil of the coronagraph to create a region of high contrast on the focal plane. The broadband optimization of these APLC masks is conducted using the limited-memory and bounded version of the Broyden-Fletcher-Goldfarb-Shanno optimizer (L-BFGS-B), which supports exact box constraints on the optimization variables. Applying the box constraints allows us to force the APLC solution to be generally grayscale in the range of [0, 1]. There are no explicit constraints imposed to generate a binary APLC, but we find in the design surveys that binary APLCs have the highest throughput - and are therefore more ``optimal" than their grayscale counterparts.
 
 \subsubsection{Lyot Stop}
-For ease of alignment, we baseline a circular lyot stop at 
+For ease of alignment, we baseline a circular lyot stop at a radius of $0.95 \lambda_C / D_C$. This fractional radius was determined to have the highest core throughput over a grid-search of designs from a fractional radius of 0.8 to 0.99 in increments of 0.01. We will explore alternate Lyot stop geometries in a later section.
+
+\subsubsection{Final Specifications}
+Based on a mixture of specifications derived from the literature or empirical studies, we construct the following specifications in Table \ref{tab:specifications}.
 
 \begin{table}[H]
     \centering
@@ -160,17 +162,44 @@ For ease of alignment, we baseline a circular lyot stop at
     \hline
     \end{tabular}
     \caption{Specifications table for the ideal case, with no throughput maximization strategies employed other than an increased IWA}
-    \label{tab:placeholder}
+    \label{tab:specifications}
 \end{table}
 
-\section{Evaluating Throughput, Low-order Aberration Sensitivity of point designs}
+
+
+\section{The Point Design}
 \label{sec:point_design}
 
-\section{Can the bandwidth be optimized to maximize throughput?}
-Contrast and throughput v.s. $1\%$ steps in bandwidth  - allows for solving characterization with arbitrary spectrum. 
+Based on the table defined in Section \ref{sec:design_methods} we conduct a joint minimization of a throughput ($T$) and contrast ($\mathcal{C}$) objective function given by Equation \ref{eq:objective},
+
+\begin{equation}
+    \mathcal{L}(\boldsymbol{\theta}) = \mathcal{C}_{DH}(\boldsymbol{\theta}) - \lambda \circ T(\boldsymbol{\theta}).
+    \label{eq:objective}
+\end{equation}
+
+The objective function $\mathcal{L}$ is a function of the parameter vector $\boldsymbol{\theta}$, which correspond to the open area in the LUVOIR-B pupil. Using the box constraints avaialble via the L-BFGS-B optimizer we restrict $\boldsymbol{\theta} \in [0, 1]$. Because of the joint minimization, we need to search for the appropriate lagrange multiplier, $\lambda$, to produce a desireable design. The reader may think of the lagrange multiplier as the ``balance" between contrast and throughput that produces a desireable design. The APLC designs in this study took between 3-26 minutes to design on an NVIDIA A100 GPU. The ability to leverage high-performance computing systems allowed us to parallelize a grid search over the optimal lagrange multipliers and lyot stop radii at high resolution. When the lagrange multiplier was too high, the optimization exited quickly ($\lteq 1$ min), because the open aperture starting point is the maximal throughput solution. The more substantial optimizations that took between 3-26 minutes gradually dropped the contrast while maintaining throughput, with deeper contrasts tending to take more time to optimize. From this grid search, we are able to select the optimal combination of lagrange multiplier and lyot stop radii to produce a design that achieve $10^{-10}$ contrast at the inner working angle, and has the highest throughput.
+The resulting APLC is the nominal design we use to compare across the different throughput maximization strategies, which we call the \emph{point design}%. The nominal contrast and core throughput, as well as a diagram of the coronagraph masks, are given in Figure \ref{fig:point_design}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{point_design.png}
+    \caption{The starting point design that we use as a point of comparison for our excercises in throughput maximization. (Left) The APLC pupil apodizer result from our nonlinear optimization. (Middle) The azimuthally averaged radial profile in normalized intensity at the coronagraphic focal plane. (Right) The core throughput, a ratio of the encircled energies between the coronagraphic PSF and the non-coronagraphic PSF as a function of angular separation. We observe $60\%$ core throughput for a coronagraph that reaches $10^{-10}$ normalized intensity at the inner working angle. In comparison to Por's work on APLC design\cite{Por_2020} that achieve $10-15\%$ core throughput at half the IWA ($3\lambda/D$), the relaxed IWA accessible in the UV grants us 4-6$\times$ the throughput.}
+    \label{fig:point_design}
+\end{figure}
+
+\section{Is there an optimal bandwidth for UV APLCs}
 \label{sec:bandwidth_survey}
+One avenue for maximizing the ``throughput" of UV APLCs is to increase the bandwidth of the coronagraph. While coronagraphs require modest bandwidths of $\approx 10-20\%$ because of chromatic wavefront error, in principle, a UV APLC could be optimized to support a larger bandwidth if the wavefront sensing and control can support it. We begin answering this question with another APLC design survey, where the core throughput is evaluated in $2\%$ increases of bandwidth beginning at $2\%$and ending at $50\%$. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{bw_survey.png}
+    \caption{Survey of the core throughput at $10 \lambda_C/D_C$ of APLCs at different bandwidths. Beginning at $2\%$ and ending at $50\%$, spaced in $2\%$ increments. We find that at an inner working angle of $6 \lambda/D$, the core throughput is not a strong function of the bandwidth. Only at the $48\%$ and $50\%$ solutions did the solver fail to find an acceptable solution. These solutions were grayscale, and had a percipitous drop in throughput. However, these data suggest that a $46\%$ bandwidth UV APLC will only suffer from a $\approx 5\%$ decrease in core throughput, and more than make up for this loss with $4.6\times$ more photons than the point design. This of course neglects the important problem of wavefront sensing and control in such a wide bandwidth, which was not considered for these calculations. We only suggest that the APLC design is not bandwidth-limited, and this can be a degree of freedom for future investigators to use to maximize throughput.}
+    \label{fig:bw_survey}
+\end{figure}
 
 \subsection{How did the aberration sensitivities change?}
+Important to consider when changing the APLC design is how the response to low-order aberrations changes. The increased IWA offers us.
 
 \section{Do Hexagonal or Circular lyot stops yield higher throughput results?}
 \label{sec:ls_survey}
