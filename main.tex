@@ -20,6 +20,7 @@
 \author[e]{Jessica Gersh-Range}
 \author[c]{Kyle van Gorkom}
 \author[b]{Roser Juanola-Parramon}
+\author[f]{Brandon Dube}
 \author[c]{Saraswathi Kalyani}
 \author[a]{Maxwell A. Millar-Blanchaer}
 \author[d]{A.J. Eldorado Riggs}
@@ -29,6 +30,7 @@
 \affil[c]{Department of Astronomy and Steward Observatory, University of Arizona, 933 N. Cherry Ave., Tucson, AZ 85721, USA}
 \affil[d]{NASA Jet Propulsion Laboratory, California Institute of Technology, 4800 Oak Grove Drive, Pasadena, CA 91109, USA}
 \affil[e]{DM Telescopes LLC, Raleigh, NC 27615, USA}
+\affil[f]{Muon Space, Mountain View, CA, 94043, USA}
 
 \authorinfo{Further author information: (Send correspondence to J.N.A.)\\J.N.A.: E-mail: jarenashcraft@ucsb.edu}
 
@@ -50,7 +52,14 @@
 
 NASA's Habitable Worlds Observatory aims to directly image and characterize $\approx 25$ habitable exoplanets to better constrain the occurence rate of worlds like our own. Among the characterization efforts includes an interest in the photometric characterization of exoplanets in the ultraviolet. The presence of ozone in a planet's atmosphere, leading to the very broad ozone absorption band, can help to determine at what stage in planetary evolution a planet is in. This scientific effort has ignited an interest in an unltraviolet coronagraph dedicated to exo-Earth characterization. The ultraviolet is a massive technical challenge, with particularly poor photon efficiency due to the high absorption of materials at shorter wavelengths. To solve this, many studies are investigating aluminum-based coatings with enhanced reflectivity in the ultraviolet. However, in this study we aim to leverage an additional degree of freedom to maximize throughput in the ultraviolet - the coronagraph masks themselves.
 
-Because of the chromatic scaling of the point-spread function, we know that the diffraction-limited spot size of a distant point source is proportional to $\lambda/D$. This means that in the diffraction-limited regime, a coronagraph operating at $\lambda=250nm$ has twice the angular resolution as an equivalent coronagraph operating at $\lambda=500nm$. Equivalently, one could hold the angular resolution at a constant angle (say, 50mas), and derive that a 6m telescope's UV coronagraph has a $\approx5.8\lambda/D$ inner working angle (IWA), whereas the visible must operate with an IWA of $\approx2.9\lambda/D$ to observe targets at the same angular separation. In the world of pupil-plane coronagraphs, such as the Apodized Pupil Lyot Coronagraph (APLC) and Phase-apodized Pupil Lyot Coronagraph\cite{Por_2020} (PAPLC), the trade of throughput and IWA is well-known. By ``sacrificing" the uneccessary inner working angle in the UV, we can potentially gain a large degree of throughput that would ordinarily be lost to the coatings.
+Because of the chromatic scaling of the point-spread function, we know that the diffraction-limited spot size of a distant point source is proportional to $\lambda/D$. This means that in the diffraction-limited regime, a coronagraph operating at $\lambda=250nm$ has twice the angular resolution as an equivalent coronagraph operating at $\lambda=500nm$. Equivalently, one could hold the angular resolution at a constant angle (say, 50mas), and derive that a 6m telescope's UV coronagraph has a $\approx5.8\lambda/D$ inner working angle (IWA), whereas the visible must operate with an IWA of $\approx2.9\lambda/D$ to observe targets at the same angular separation. In the world of pupil-plane coronagraphs, such as the Apodized Pupil Lyot Coronagraph (APLC) and Phase-apodized Pupil Lyot Coronagraph\cite{Por_2020} (PAPLC), the trade of throughput and IWA is well-known. By ``sacrificing" the uneccessary inner working angle in the UV, we can potentially gain a large degree of throughput that would ordinarily be lost to the coatings. Figure \ref{fig:radial_throughput} shows a representative design study of the core throughput of APLCs subject to gradually increasing inner working angle. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\linewidth]{radial_throughput.png}
+    \caption{Caption}
+    \label{fig:radial_throughput}
+\end{figure}
 
 With respect to exoplanet detection and characterization, coronagraph core throughput is as important as mirror diameter. Increasing core throughput by a modest $10\%$ is almost as impactful to the coronagraph as increasing HWO's entrance pupil from $6.5$m to $7.1$m. In the UV, where a substantial amount of light is lost at every optic, maximizing core throughput is key to the success of an ultraviolet coronagraph. Herein we define throughput in accordance with Por 2020's definition\cite{Por_2020}, as the ratio of the encircled energies between the non-coronagraphic PSF ($\eta_0$) and the off-axis coronagraphic PSF ($\eta$), shown in Equation \ref{eq:throughput}, 
 
@@ -65,7 +74,7 @@ In this study, we report on an APLC design survey conducted to identify differen
 
 \section{Design Methodology}
 \label{sec:design_methods}
-\textcolor{red}{Some blurb about AMPL / Gurobi, citation to prior work. AJ + Jessica please comment}
+
 The first design methodology for the UV APLCs follows the same overall process that was used to design the shaped pupil coronagraph masks for the Nancy Grace Roman Space Telescope\cite{Gersh-Range_2022,Riggs_2017}.  This process consists of writing a linear program in AMPL\cite{AMPL} that maximizes a proxy for the coronagraph throughput (such as the clear area of the shaped pupil mask or the peak pixel value for an off-axis planet) subject to a set of constraints that includes the optical propagation equations and the contrast in the specified region of the image plane. This type of linear program is thoroughly described in Zimmerman et al. 2016\cite{Zimmerman_2016}, so the details are not reproduced here.
 
 The design methodology that utilizes algorithmic differentiation is built in an entirely open-source environment based on the \texttt{prysm} numerical optics package. Written in Python, \emph{prysm} features hot-swappable GPU-accelerated optical propagation enabled by the \texttt{cupy} python package. \emph{prysm} is also natively differentiable, not relying on additional packages (e.g. \texttt{Jax}, \texttt{Pytorch}, \texttt{Tensorflow}) to compute the adjoint model of the objective function. The adjoints of the operations in a Lyot-type coronagraph are simple to implement, following the backpropagation logic in Jurling and Fienup\cite{Jurling:14}, so \texttt{prysm} has implemented these operations in its core propagation utilities. To extend \texttt{prysm}'s functionality to include coronagraph design, we introduce the free and open-source \texttt{dygdug} package. This package is an extension to \texttt{prysm} to include object-oriented optical systems, focal plane wavefront sensing, and critical to this work \emph{coronagraph design}. Building upon work presented in Ashcraft et al. 2025\cite{Ashcraft_2025}, we analytically derive the adjoint model for a Lyot-type coronagraph and extend the design problem to both amplitude- and phase- apodized Lyot coronagraphs (APLCs and PAPLCs, respectively). More detail about \texttt{dygdug} can be found in a forthcoming submission to the Journal of Open Source Software. For this study, preliminary optimizations are performed on a local workstation with an NVIDIA RTX 4090. Larger surveys were performed at the University of California, Santa Barbara Braid2 cluster on NVIDIA A100 GPU nodes, and NASA's Cabeus cluster on NVIDIA A100 GPU nodes. The ability to natively differentiate the coronagraph models is necessary for the high dimensionality of the problem ($\approx$262,000 variables), and running both the optimizer and the coronagraph models on GPUs using \texttt{cupy} makes for expeditious optimization. A typical coronagraph solution generated this way takes approximately 25 minutes to complete on the NVIDIA A100 GPU.
@@ -98,7 +107,7 @@ For this study we baseline the LUVOIR-B Pupil. Since the aperture segmentation o
 Strictly speaking, APLC optimization is wavelength-agnostic. The relative wavelengths included in the generally broadband optimization are what matter. However, the \texttt{prysm} optical propagator expresses propagation in units of physical distance (e.g. mm, $\mu$m), so an explicit wavelength is used in our propagation. We assume a center wavelength of $\lambda_c=350nm$, and utilize a $10\%$ bandwidth for our point design, with 5 wavelengths equally spaced across the band. In Section \ref{sec:bandwidth_survey} where we explore designs of progressively larger bandwidth, we hold a \emph{minimum} of 5 wavelengths across the band such that at minimum, two wavelengths are not spaced by more than $2\%$. Larger bandwidths include more wavelengths to accommodate for this.
 
 \subsubsection{Dark Hole Extent and Focal Plane Mask}
-Because the UV is restricted to a characterization mode, we assume some knowledge of the position of a theoretical exoplanet because it is detected in the visible. The trade-off between inner working angle and throughput is well-known\cite{Rouan2011}, but the relation between azimuthal extent and throughput is less-studied. Because the coronagraph presented here is a characterization-only coronagraph, we can theoretically gain some throughput by sacrificing the azimuthal extent of the dark hole. Following the Roman Coronagraph's characterization shaped-pupil coronagraph (SPC), we use a ``bowtie"-shaped dark zone. The APLC designs will have a symmetric dark hole (which naturally arises), and the PAPLC designs will only be required to have half the bowtie on one side of the focal plane. 
+Because the UV is restricted to a characterization mode, we assume some knowledge of the position of a theoretical exoplanet because it is detected in the visible. The trade-off between inner working angle and throughput is well-known\cite{Rouan2011}, but the relation between azimuthal extent and throughput is less-studied. Because the coronagraph presented here is a characterization-only coronagraph, we can theoretically gain some throughput by sacrificing the azimuthal extent of the dark hole. Following the Roman Coronagraph's characterization shaped-pupil coronagraph (SPC), we use a ``bowtie"-shaped dark zone.
 
 We first conduct a brief survey where the coronagraphs are optimized to maximize throughput and minimize contrast. The respective lagrange multipliers for throughput and contrast were not chosen judiciously. Rather, we simply aim to understand if there is a trend between different designs with the same cost function, where only the azimuthal extent of the dark hole and focal plane mask varies. Shown in Figure \ref{fig:azimuthal_study} are the results of a set of designs with discrete angular extents to sample between a small bowtie and a full $360^\circ$ dark hole.
 
@@ -167,7 +176,7 @@ Based on a mixture of specifications derived from the literature or empirical st
 
 
 
-\section{The Point Design}
+\subsection{The Point Design}
 \label{sec:point_design}
 
 Based on the table defined in Section \ref{sec:design_methods} we conduct a joint minimization of a throughput ($T$) and contrast ($\mathcal{C}$) objective function given by Equation \ref{eq:objective},
@@ -177,8 +186,10 @@ Based on the table defined in Section \ref{sec:design_methods} we conduct a join
     \label{eq:objective}
 \end{equation}
 
-The objective function $\mathcal{L}$ is a function of the parameter vector $\boldsymbol{\theta}$, which correspond to the open area in the LUVOIR-B pupil. Using the box constraints avaialble via the L-BFGS-B optimizer we restrict $\boldsymbol{\theta} \in [0, 1]$. Because of the joint minimization, we need to search for the appropriate lagrange multiplier, $\lambda$, to produce a desireable design. The reader may think of the lagrange multiplier as the ``balance" between contrast and throughput that produces a desireable design. The APLC designs in this study took between 3-26 minutes to design on an NVIDIA A100 GPU. The ability to leverage high-performance computing systems allowed us to parallelize a grid search over the optimal lagrange multipliers and lyot stop radii at high resolution. When the lagrange multiplier was too high, the optimization exited quickly ($\lteq 1$ min), because the open aperture starting point is the maximal throughput solution. The more substantial optimizations that took between 3-26 minutes gradually dropped the contrast while maintaining throughput, with deeper contrasts tending to take more time to optimize. From this grid search, we are able to select the optimal combination of lagrange multiplier and lyot stop radii to produce a design that achieve $10^{-10}$ contrast at the inner working angle, and has the highest throughput.
-The resulting APLC is the nominal design we use to compare across the different throughput maximization strategies, which we call the \emph{point design}%. The nominal contrast and core throughput, as well as a diagram of the coronagraph masks, are given in Figure \ref{fig:point_design}.
+The objective function $\mathcal{L}$ is a function of the parameter vector $\boldsymbol{\theta}$, which correspond to the open area in the LUVOIR-B pupil. Using the box constraints avaialble via the L-BFGS-B optimizer we restrict $\boldsymbol{\theta} \in [0, 1]$. Because of the joint minimization, we need to search for the appropriate lagrange multiplier, $\lambda$, to produce a desireable design. The reader may think of the lagrange multiplier as the ``balance" between contrast and throughput that produces a desireable design. The APLC designs in this study took between 3-26 minutes to design on an NVIDIA A100 GPU. The ability to leverage high-performance computing systems allowed us to parallelize a grid search over the optimal lagrange multipliers and lyot stop radii at high resolution. When the lagrange multiplier was too high, the optimization exited quickly ($\lteq 1$ min), because the open aperture starting point is the maximal throughput solution. The more substantial optimizations that took between 3-26 minutes gradually dropped the contrast while maintaining throughput, with deeper contrasts tending to take more time to optimize. From this grid search, we are able to select the a combination of lagrange multiplier and lyot stop radii to produce a design that achieve $10^{-10}$ contrast at the inner working angle, and has the highest throughput. Note that the grid search comes with an inherently limited resolution of these parameters, and does not necesarilly guarentee an optimal design. For this, methods like the lagrangian or augmented lagrangian method enable searching for the appropriate lagrange multiplier, which will be considered in future work. Por et al. 2022 may be the most well-known example of such a method applied to APLC design\cite{Por_2022}.
+The resulting APLC is the nominal design we use to compare across the different throughput maximization strategies, which we call the \emph{point design}. From this, we can engage in design studies that explore other ``free" parameters with which we can maximize throughput in APLCs.
+
+%. The nominal contrast and core throughput, as well as a diagram of the coronagraph masks, are given in Figure \ref{fig:point_design}.
 
 \begin{figure}
     \centering
@@ -187,29 +198,65 @@ The resulting APLC is the nominal design we use to compare across the different 
     \label{fig:point_design}
 \end{figure}
 
-\section{Is there an optimal bandwidth for UV APLCs}
+\section{Is Throughput a function of Bandwidth?}
 \label{sec:bandwidth_survey}
-One avenue for maximizing the ``throughput" of UV APLCs is to increase the bandwidth of the coronagraph. While coronagraphs require modest bandwidths of $\approx 10-20\%$ because of chromatic wavefront error, in principle, a UV APLC could be optimized to support a larger bandwidth if the wavefront sensing and control can support it. We begin answering this question with another APLC design survey, where the core throughput is evaluated in $2\%$ increases of bandwidth beginning at $2\%$and ending at $50\%$. 
+One avenue for maximizing the ``throughput" of UV APLCs is to increase the bandwidth of the coronagraph. While coronagraphs require modest bandwidths of $\approx 10-20\%$ because of chromatic wavefront error, in principle, a UV APLC could be optimized to support a larger bandwidth if the wavefront sensing and control can support it. We begin answering this question with another APLC design survey, where the core throughput is evaluated in $2\%$ increases of bandwidth beginning at $4\%$ and ending at $50\%$. A minimum of 5 wavelengths are used to sample the bandwidth for every design, with more wavelengths added so that there is not a greater than $2\%$ change between adjacent wavelengths. In other words, all designs with a bandwidth of $\leq 10\%$ use 5 wavelengths across the bandwidth, and each step beyond uses an additional wavelength for each $2\%$ step in bandwidth.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.5\textwidth]{bw_survey.png}
-    \caption{Survey of the core throughput at $10 \lambda_C/D_C$ of APLCs at different bandwidths. Beginning at $2\%$ and ending at $50\%$, spaced in $2\%$ increments. We find that at an inner working angle of $6 \lambda/D$, the core throughput is not a strong function of the bandwidth. Only at the $48\%$ and $50\%$ solutions did the solver fail to find an acceptable solution. These solutions were grayscale, and had a percipitous drop in throughput. However, these data suggest that a $46\%$ bandwidth UV APLC will only suffer from a $\approx 5\%$ decrease in core throughput, and more than make up for this loss with $4.6\times$ more photons than the point design. This of course neglects the important problem of wavefront sensing and control in such a wide bandwidth, which was not considered for these calculations. We only suggest that the APLC design is not bandwidth-limited, and this can be a degree of freedom for future investigators to use to maximize throughput.}
+    \caption{Survey of the core throughput at $10 \lambda_C/D_C$ of APLCs at different bandwidths. Beginning at $2\%$ and ending at $50\%$, spaced in $2\%$ increments. We find that at an inner working angle of $6 \lambda/D$, the core throughput is not a strong function of the bandwidth. Only at the $48\%$ and $50\%$ solutions did the solver fail to find an acceptable solution. These solutions were grayscale, and had a precipitous drop in throughput. However, these data suggest that a $46\%$ bandwidth UV APLC will only suffer from a $\approx 5\%$ decrease in core throughput, and more than make up for this loss with $4.6\times$ more photons than the point design. This of course neglects the important problem of wavefront sensing and control in such a wide bandwidth, which was not considered for these calculations. We only suggest that the APLC design is not bandwidth-limited, and this can be a degree of freedom for future investigators to use to maximize throughput.}
     \label{fig:bw_survey}
 \end{figure}
 
-\subsection{How did the aberration sensitivities change?}
-Important to consider when changing the APLC design is how the response to low-order aberrations changes. The increased IWA offers us.
+What we find is a modest decrease in core throughput as a function of bandwidth. The point design's $\approx 60\%$ core throughput can be marginally improved by going to a shorter bandwidth, at the cost of substantially reducing the number of photons. Alternatively, the number of photons let through the filter can be substantially increased with a marginal decrease in core throughput. As an example, we observe that moving from a bandwidth of $10\%$ to $20\%$ results in a $\approx3\%$ degradation in core throughput, but double the number of photons. Critically, this analysis neglects wavefront sensing and control (WFSC), which is particularly challenging in the ultraviolet. The WFSC abilities of a UV coronagraph will be the ultimate limiter to bandwidth, but the results presented here suggest that it is not a substantive limiter to the nominal design of the coronagraph. Therefore, the total system throughput can \emph{in principle} be improved by going to larger bandwidths. Future work should consider the optimal bandwidth for photometric characterization in the UV, and the limitations of WFSC in the UV to further refine this analysis. 
 
-\section{Do Hexagonal or Circular lyot stops yield higher throughput results?}
+Important to consider when changing the design of the APLC is how the response to low-order aberrations changes. The increased IWA offers us robustness to small amplitudes of aberration, but given that a constant wavefront error budget results in twice the effective aberration as in the visible (i.e., $500nm$ of OPD is  $\approx1$ wave of error in the visible, but $\approx2$ waves of error in the UV), the sensitivity of a UV coronagraph onboard HWO is expected to be comparable to the visible\cite{roser_uv_2026}. However, an increased bandwidth effectively ``decreases" the inner working angle of the longest wavelength in the bandwidth, which could in turn decrease its sensitivity to low-order aberrations at that wavelength. To evaluate the low-order aberration sensitivity of these coronagraphs we follow the procedure used to analyze the LUVOIR coronagraphs in Juanola-Parramon 2022\cite{Roser_2022}. A log-scan of 3rd-order aberration amplitudes are injected into the entrance pupil of the coronagraph and the corresponding contrast degradation is observed at the focal plane. This is repeated for aberrations spanning the entire entrance pupil (pupil-common), as well for low-order aberrations that vary segment-to-segment (segment-to-segment) to understand the sensitivity of each mode to these aberrations. From the log-scan of aberration amplitudes, we compute the slope of the contrast degradation around $4\times 10^{-11}$ contrast to get the final sensitivity. The final contrast is then multiplied by $10^{12}$, and the wavefront error scaled to picometers ($pm$) to express the final sensitivity in pico-part per picometer. The results of this sensitivity analysis are shown in Figure \ref{fig:sensitivities_bandwidth}, where the aberration sensitivities appear uncorrellated to the bandwidth.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{sensitivities_bandwidth.png}
+    \caption{Caption}
+    \label{fig:sensitivities_bandwidth}
+\end{figure}
+
+\section{Is throughput a function of Lyot Stop geometry?}
 \label{sec:ls_survey}
-\textcolor{red}{Open aperture, erode aperture edges}
-Erode aperture edge until open area is the same! 
+The next design study of interest was to determine if throughput could be gained going to alternative Lyot stop geometries. In addition to the circular lyot stops used in the point design, we explore Lyot stops with eroded segment edges (left, Figure \ref{fig:lyot_geometries}), and a shrunk variant of the entrance pupil's aperture edges (right, Figure \ref{fig:lyot_geometries}). We generate a different Lyot stop in $1\%$ increments from a ratio of the Lyot stop diameter to the circumscribed entrance pupil diameter, $D_{LS}/D_{EP}$, for the circular lyot stop. The degree of degradation for the eroded segmented and eroded edges are then generated by what degree of erosion yields the same integrated energy through the Lyot mask.
 
-\subsection{Did aberration sensitivities change?}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{lyot_geometries.png}
+    \caption{Caption}
+    \label{fig:lyot_geometries}
+\end{figure}
+
+The result of this design survey is given in Figure \ref{fig:lyot_study}, which shows that the eroded segment designs yield much lower throughput solutions than the circular aperture designs, while the eroded aperture edges produce nearly the same core throughput. This study suggests that the point design may have had a Lyot stop that was too far open, given that the throughput increasing roughly linearly until an $85\%$ diameter, where it then tapers off. Only $1-3\%$ core throughput is lost by reducing the Lyot diameter to $85\%$ of the circumscribed diameter, and it could grant lower alignment sensitivity. From an alignment perspective the circular Lyot stop is the most optimal. The rotational degree of freedom means that the clocking of the Lyot mask about the propagation direction is invariant. As before, we repeat the sensitivity analysis for the eroded segment designs (Figure \ref{fig:sensitivity_segments}), and eroded edge designs (Figure \ref{fig:sensitivity_edges}).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{ls_survey.png}
+    \caption{Caption}
+    \label{fig:lyot_study}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{sensitivities_lyotstop_segments.png}
+    \caption{Caption}
+    \label{fig:sensitivity_segments}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{sensitivities_lyotstop_edges.png}
+    \caption{Caption}
+    \label{fig:sensitivity_edges}
+\end{figure}
 
 \section{Conclusions}
 \label{sec:conclusions}
+The real brr was the friends we made along the way
 
 \section{Appendix A: Gradient Backpropagation for the Augmented Lagrangian Method}
 To democratize this analysis we carry out the algorithmic differentiation by hand and return the mathematical models to the reader to be implemented in the programming language of their choice. Por\cite{Por_2020} revolutionized coronagraph design by implementing the Augmented Lagrangian Method (ALM) for APLC and PAPLC optimization. Here we work out the reverse-mode algorithmic differentiation of the ALM so that it can be included in other optimization routines. This is the same RMAD algorithm we implement in \texttt{dygdug} as an option for coronagraph optimization.
